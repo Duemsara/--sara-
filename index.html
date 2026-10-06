@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ល្បែងសិក្សា សាលាបឋមសិក្សា ស្រែរាជ (srereach School) | Ou Ta Pruk Learning Games</title>
+  <meta name="description" content="កម្មវិធីល្បែងសិក្សាអន្តរកម្មកម្រិតបឋមសិក្សា Wordwall-style សាលាបឋមសិក្សា ស្រែរាជ គាំទ្រភាសាខ្មែរ និងអង់គ្លេស ជាមួយបច្ចេកវិទ្យា AI Google Gemini, ហ្គេម ៧ ប្រភេទ និងសំឡេង Web Audio API">
+
+  <!-- Favicon / Shield Icon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f59e0b'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z'/></svg>">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/games.css">
+
+  <!-- Third-party Libraries (Fast reliable CDNs) -->
+  <!-- 1. SheetJS for Excel/CSV parsing -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- 2. PDF.js for multimodal lesson document parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+</head>
+<body data-theme="jungle">
+  <!-- Fullscreen Particle Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Application Container -->
+  <div class="app-container">
+
+    <!-- ======================================================================
+         TOP STICKY NAVIGATION BAR (Matching screenshot layout)
+         ====================================================================== -->
+    <header class="top-navbar">
+      <!-- Top Row: School Brand & Quick Lesson Dropdown -->
+      <div class="nav-row-top">
+        <div class="brand-section">
+          <!-- School Shield Logo -->
+          <svg class="brand-crest" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 5 L88 20 C88 65 50 95 50 95 C50 95 12 65 12 20 Z" fill="url(#shieldGrad)" stroke="#facc15" stroke-width="3"/>
+            <path d="M50 18 L76 30 C76 62 50 82 50 82 C50 82 24 62 24 30 Z" fill="#047857" opacity="0.6"/>
+            <path d="M35 50 L45 60 L68 35" stroke="#fef08a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs>
+              <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#b45309"/>
+                <stop offset="50%" stop-color="#d97706"/>
+                <stop offset="100%" stop-color="#f59e0b"/>
+              </linearGradient>
+            </defs>
+          </svg>
+
+          <div class="brand-text">
+            <h1 class="brand-title" data-i18n="app_title">ល្បែងសិក្សា សាលាបឋមសិក្សា ស្រែរាជ</h1>
+            <span class="brand-subtitle" data-i18n="app_subtitle">srereach School / បង្កើតដោយ៖ លោកគ្រូ ឌឹម សារ៉ា</span>
+          </div>
+        </div>
+
+        <!-- Activity Quick Selector -->
+        <div class="lesson-selector-group">
+          <span class="lesson-selector-icon">⭐</span>
+          <select id="lesson-quick-dropdown" class="lesson-select-dropdown" aria-label="Select Lesson Activity">
+            <!-- Populated dynamically by app.js -->
+          </select>
+          <button id="btn-open-library" class="btn-icon-library" title="Activity Library" data-i18n-title="activity_library" aria-label="Library">
+            📚
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Navigation Controls & Actions -->
+      <div class="nav-row-controls">
+        <!-- Bilingual Language Switcher -->
+        <button id="btn-toggle-lang" class="nav-btn" aria-label="Toggle Language">
+          🇰🇭 ភាសាខ្មែរ
+        </button>
+
+        <!-- Theme Selector Dropdown -->
+        <div class="theme-selector-wrap">
+          <select id="theme-select-dropdown" class="theme-dropdown" aria-label="Select Theme">
+            <option value="jungle">🌿 Jungle Forest</option>
+            <option value="classic">🎨 Classic Colorful</option>
+            <option value="cosmic">🌌 Cosmic Space</option>
+            <option value="neon">⚡ Arcade Neon</option>
+          </select>
+          <span class="theme-arrow">▼</span>
+        </div>
+
+        <!-- Audio Mute / Sound Toggle -->
+        <button id="btn-toggle-sound" class="nav-btn nav-btn-icon-only" title="Toggle Sound" aria-label="Sound Toggle">
+          🔊
+        </button>
+
+        <!-- Fullscreen Toggle -->
+        <button id="btn-toggle-fullscreen" class="nav-btn nav-btn-icon-only" title="Toggle Fullscreen" aria-label="Fullscreen">
+          ⛶
+        </button>
+
+        <!-- Open File (.json) -->
+        <button id="btn-open-file-cta" class="nav-btn" data-i18n="open_file">
+          📂 បើកឯកសារ
+        </button>
+        <input type="file" id="hidden-json-file-input" accept=".json" style="display: none;">
+
+        <!-- Save File (.json) -->
+        <button id="btn-save-file-cta" class="nav-btn" data-i18n="save_file">
+          💾 រក្សាទុក File
+        </button>
+
+        <!-- AI Generator Glowing Button -->
+        <button id="btn-open-ai-generator" class="nav-btn btn-ai-glow" data-i18n="ai_generator">
+          ✨ AI Generator
+        </button>
+
+        <!-- Edit Content -->
+        <button id="btn-open-editor" class="nav-btn btn-edit-action" data-i18n="edit_content">
+          ✏️ កែសម្រួល
+        </button>
+
+        <!-- Create New -->
+        <button id="btn-open-creator" class="nav-btn btn-create-action" data-i18n="create_new">
+          ➕ បង្កើតថ្មី
+        </button>
+      </div>
+    </header>
+
+    <!-- ======================================================================
+         GAME TEMPLATES SELECTOR BAR (The 7 Interactive Game Modes)
+         ====================================================================== -->
+    <section class="templates-container">
+      <div class="templates-header">
+        <div class="templates-title-group">
+          <span class="templates-title" data-i18n="templates_header_title">
+            🎮 ទម្រង់ហ្គេម (Game Templates):
+          </span>
+          <span class="templates-subtitle" data-i18n="templates_header_sub">
+            ចុចប្តូរភ្លាមៗលើទិន្នន័យមេរៀនដែលកំពុងលេង
+          </span>
+        </div>
+      </div>
+
+      <div class="templates-grid">
+        <!-- 1. Matching Pairs -->
+        <button class="template-btn active" data-template="pairs">
+          <span class="template-btn-icon">🃏</span>
+          <span data-i18n="template_pairs">បណ្ណផ្គូផ្គង</span>
+        </button>
+
+        <!-- 2. Match Up -->
+        <button class="template-btn" data-template="match">
+          <span class="template-btn-icon">🧩</span>
+          <span data-i18n="template_match">ផ្គូផ្គង</span>
+        </button>
+
+        <!-- 3. Quiz Gameshow -->
+        <button class="template-btn" data-template="quiz">
+          <span class="template-btn-icon">🎯</span>
+          <span data-i18n="template_quiz">សំណួរចម្លើយ</span>
+        </button>
+
+        <!-- 4. Open The Box -->
+        <button class="template-btn" data-template="box">
+          <span class="template-btn-icon">🎁</span>
+          <span data-i18n="template_box">បើកប្រអប់</span>
+        </button>
+
+        <!-- 5. Student Wheel Picker & Team Maker -->
+        <button class="template-btn" data-template="wheel">
+          <span class="template-btn-icon">🎡</span>
+          <span data-i18n="template_wheel">កង់ចាប់ឈ្មោះសិស្ស</span>
+        </button>
+
+        <!-- 6. Word Search -->
+        <button class="template-btn" data-template="wordsearch">
+          <span class="template-btn-icon">🔠</span>
+          <span data-i18n="template_wordsearch">ស្វែងរកពាក្យ</span>
+        </button>
+
+        <!-- 7. Whack-a-Mole -->
+        <button class="template-btn" data-template="whack">
+          <span class="template-btn-icon">🐹</span>
+          <span data-i18n="template_whack">វាយសត្វកណ្តុរ</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         ARENA STAGE: Dynamic Interactive Stage
+         ====================================================================== -->
+    <main class="arena-card">
+      <!-- Arena Header -->
+      <div class="arena-header">
+        <div class="arena-meta">
+          <h2 class="arena-title" id="arena-title-text">
+            🐾 🖼️ ផ្គូផ្គងរូបភាពសត្វ និងឈ្មោះ (Image to Word)
+          </h2>
+          <p class="arena-desc" id="arena-desc-text">
+            លំហាត់ផ្គូផ្គងរូបភាពសត្វព្រៃជាក់ស្តែង ទៅនឹងឈ្មោះពាក្យត្រឹមត្រូវ
+          </p>
+        </div>
+
+        <div class="arena-badges">
+          <span class="meta-badge" id="arena-type-badge">រូបភាព និងពាក្យ</span>
+          <span class="meta-badge" id="arena-item-count-badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">6 ធាតុ</span>
+        </div>
+      </div>
+
+      <!-- Dynamic Stage Container: Games Mount Here -->
+      <div id="arena-stage-container"></div>
+    </main>
+
+  </div>
+
+  <!-- ======================================================================
+       MODAL DIALOGS
+       ====================================================================== -->
+  <!-- 1. Open The Box Mystery Question Modal -->
+  <div id="box-detail-modal" class="modal-overlay"></div>
+
+  <!-- 2. Student Wheel Winner Fanfare Modal -->
+  <div id="winner-fanfare-modal" class="modal-overlay"></div>
+
+  <!-- 3. Google Gemini AI Generator Modal -->
+  <div id="ai-generator-modal" class="modal-overlay"></div>
+
+  <!-- 4. Activity Creator Studio Modal -->
+  <div id="activity-creator-modal" class="modal-overlay"></div>
+
+  <!-- 5. Activity Library Modal -->
+  <div id="activity-library-modal" class="modal-overlay"></div>
+
+  <!-- 6. Whack Studio Modal -->
+  <div id="whack-studio-modal" class="modal-overlay"></div>
+
+  <!-- 7. Global Victory Fanfare Modal -->
+  <div id="victory-fanfare-modal" class="modal-overlay"></div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ======================================================================
+       APPLICATION SCRIPTS (Sequential ES6 zero-dependency execution)
+       ====================================================================== -->
+  <script src="js/audio.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/data.js"></script>
+
+  <!-- Game Engines -->
+  <script src="js/games/pairs.js"></script>
+  <script src="js/games/match.js"></script>
+  <script src="js/games/quiz.js"></script>
+  <script src="js/games/box.js"></script>
+  <script src="js/games/wheel.js"></script>
+  <script src="js/games/wordsearch.js"></script>
+  <script src="js/games/whack.js"></script>
+
+  <!-- Components -->
+  <script src="js/components/ai_generator.js"></script>
+  <script src="js/components/creator.js"></script>
+  <script src="js/components/whack_creator.js"></script>
+  <script src="js/components/activity_manager.js"></script>
+
+  <!-- App Coordinator -->
+  <script src="js/app.js"></script>
+</body>
+</html>
